@@ -11,8 +11,10 @@ import {
   Image,
 } from "react-native";
 import logo from "../../assets/logo.png";
+import { useNavigation } from "@react-navigation/native";
 
-const SignIn_pass = () => {
+const SignUp_pass = () => {
+  const navigation = useNavigation();
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -20,9 +22,9 @@ const SignIn_pass = () => {
     >
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Image source={logo} style={styles.logo} />
-        <Text style={styles.title}>Log in as a Driver</Text>
+        <Text style={styles.title}>Create a Passenger account</Text>
         <Text style={styles.subtitle}>
-          Enter your email and password to log in
+          Enter your email and password to sign up for this app
         </Text>
         <TextInput
           style={styles.input}
@@ -33,14 +35,23 @@ const SignIn_pass = () => {
         />
         <TextInput
           style={styles.input}
-          placeholder="password"
+          placeholder="create password"
           placeholderTextColor="#aaa"
           secureTextEntry
         />
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Log in</Text>
+          <Text style={styles.buttonText}>Sign up with email</Text>
         </TouchableOpacity>
-        <Text style={styles.footerText}>Passengar? Click here</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate("SignIn_pass");
+          }}
+        >
+          <Text style={styles.footerText}>
+            Already have account?{" "}
+            <Text style={styles.footerLink}>Click Here</Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -58,8 +69,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 109,
+    height: 109,
     marginBottom: 20,
   },
   title: {
@@ -107,4 +118,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignIn_pass;
+export default SignUp_pass;

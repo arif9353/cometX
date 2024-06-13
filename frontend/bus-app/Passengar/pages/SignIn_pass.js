@@ -11,8 +11,9 @@ import {
   Image,
 } from "react-native";
 import logo from "../../assets/logo.png";
-
+import { useNavigation } from "@react-navigation/native";
 const SignIn_pass = () => {
+  const navigation = useNavigation();
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -20,7 +21,7 @@ const SignIn_pass = () => {
     >
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Image source={logo} style={styles.logo} />
-        <Text style={styles.title}>Log in as a Driver</Text>
+        <Text style={styles.title}>Log in to your account</Text>
         <Text style={styles.subtitle}>
           Enter your email and password to log in
         </Text>
@@ -40,7 +41,16 @@ const SignIn_pass = () => {
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
-        <Text style={styles.footerText}>Passengar? Click here</Text>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.navigate("SignUp_pass");
+          }}
+        >
+          <Text style={styles.footerText}>
+            Don't have an account?{" "}
+            <Text style={styles.footerLink}>Sign Up</Text>
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
