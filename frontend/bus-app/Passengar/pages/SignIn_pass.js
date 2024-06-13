@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,8 +12,19 @@ import {
 } from "react-native";
 import logo from "../../assets/logo.png";
 import { useNavigation } from "@react-navigation/native";
+import { supabase } from '../../src/supabaseClient';
+
 const SignIn_pass = () => {
   const navigation = useNavigation();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else alert('Logged in successfully!');
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -31,14 +42,18 @@ const SignIn_pass = () => {
           placeholderTextColor="#aaa"
           keyboardType="email-address"
           autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}
           placeholder="password"
           placeholderTextColor="#aaa"
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
         />
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
         <TouchableOpacity
