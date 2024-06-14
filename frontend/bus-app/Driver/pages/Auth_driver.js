@@ -12,8 +12,10 @@ import {
 } from "react-native";
 import logo from "../../assets/logo.png";
 import { supabase } from '../../src/supabaseClient';
+import { useNavigation } from "@react-navigation/native";
 
 const Auth_driver = () => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -54,7 +56,9 @@ const Auth_driver = () => {
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
-        <Text style={styles.footerText}>Passengar? Click here</Text>
+        <Text style={styles.footerText} onPress={() => {
+          navigation.navigate("SignUp_pass");
+        }}>Passengar? Click here</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
