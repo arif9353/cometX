@@ -16,13 +16,14 @@ const LocationProvider = ({ children }) => {
                 await AsyncStorage.setItem('longitude', String(location.coords.longitude));
 
                 // Update location in Supabase
-                const userId = await AsyncStorage.getItem('user_id'); // Assuming user_id is stored in AsyncStorage
-                if (userId) {
+                const authPass = await AsyncStorage.getItem('user_id'); // Assuming user_id is stored in AsyncStorage as UUID
+                if (authPass) {
                     const { error } = await supabase
                         .from('passenger')
                         .update({ latitude: location.coords.latitude, longitude: location.coords.longitude })
-                        .eq('id', userId);
-                    console.log("Updated the location")
+                        .eq('auth_pass', authPass); // Update using auth_pass instead of id
+                    console.log("Updated the location");
+                    console.log("userid is: ", authPass)
                     if (error) {
                         console.error('Error updating location:', error);
                     }

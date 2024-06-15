@@ -6,6 +6,7 @@ import SignUp_pass from "./Passengar/pages/SignUp_pass";
 import SignIn_pass from "./Passengar/pages/SignIn_pass";
 import Auth_driver from "../bus-app/Driver/pages/Auth_driver";
 import LocationProvider from "./src/LocationProvider"; // Adjust the path as necessary
+import Dashboard from "./Passengar/pages/Dashboard_pass";
 
 const Stack = createNativeStackNavigator();
 
@@ -14,6 +15,11 @@ const App = () => {
     <LocationProvider>
       <NavigationContainer>
         <Stack.Navigator initialRouteName={"Info"}>
+          <Stack.Screen
+            name="Dashboard_pass"
+            component={Dashboard}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Info"
             component={Info}

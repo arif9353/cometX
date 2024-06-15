@@ -9,10 +9,12 @@ import {
   Platform,
   ScrollView,
   Image,
+  Alert
 } from "react-native";
 import logo from "../../assets/logo.png";
 import { useNavigation } from "@react-navigation/native";
 import { supabase } from '../../src/supabaseClient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignIn_pass = () => {
   const navigation = useNavigation();
@@ -20,9 +22,23 @@ const SignIn_pass = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
-    else alert('Logged in successfully!');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      alert(error.message);
+    }
+    else {
+      console.log("This is the data: in singin", data)
+      const userId = data.user?.id;
+      console.log("userID is:", userId)
+      if (userId) {
+        await AsyncStorage.setItem('user_id', userId);
+        console.log("ENTERED");
+        navigation.navigate("Dashboard_pass");
+        Alert.alert("Success", "Logged in successfully!");
+      } else {
+        Alert.alert("Error", "Failed to retrieve user ID after login.");
+      }
+    }
   };
 
   return (

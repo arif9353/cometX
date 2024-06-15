@@ -108,26 +108,44 @@ const SignUp_pass = () => {
 
     const busNumber = findBusNumber(startStop, endStop);
     if (!busNumber) {
-      Alert.alert("Error", "No bus route found for the selected stops.");
-      return;
+      Alert.alert("Warning", "No direct buses found for selected start and end stops. No worries, you can Edit the bus numbers from your profile afterwards!");
     }
 
-    const { error, user } = await supabase.auth.signUp({ email, password });
-    if (error) {
-      Alert.alert("Error", error.message);
+    // Authenticate the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    if (authError) {
+      Alert.alert("Error", authError.message);
     } else {
+      console.log("This is auth data: ", authData)
+      const userId = authData.user?.id;
+      if (!userId) {
+        Alert.alert("Error", "Failed to retrieve user ID after authentication.");
+        return;
+      }
+
       try {
         const latitude = await AsyncStorage.getItem('latitude');
         const longitude = await AsyncStorage.getItem('longitude');
         if (latitude !== null && longitude !== null) {
           const { data, error: insertError } = await supabase
             .from('passenger')
-            .insert([{ email, username, contact, start_stop: startStop, end_stop: endStop, bus_fk: busNumber, latitude: latitude, longitude: longitude }]);
+            .insert([{
+              email,
+              username,
+              contact,
+              start_stop: startStop,
+              end_stop: endStop,
+              bus_fk: busNumber,
+              latitude: latitude,
+              longitude: longitude,
+              auth_pass: userId // Use auth_pass column to store the UUID from the authentication
+            }]);
           if (insertError) {
             Alert.alert("Error", insertError.message);
           } else {
             // Store the user ID in AsyncStorage
-            await AsyncStorage.setItem('user_id', user.id);
+            await AsyncStorage.setItem('user_id', userId);
+            navigation.navigate("SignIn_pass")
             Alert.alert('Success', 'Signed up successfully! Please verify your email.');
           }
         }
