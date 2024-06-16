@@ -13,9 +13,6 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalStops from './ModalStops';
 
-
-
-
 const stations = [
     {
         name: "BACKBAY BUS DEPOT",
@@ -230,8 +227,6 @@ const busRoutes = {
     ]
 };
 
-
-
 const allBusStops = [
     "BACKBAY BUS DEPOT",
     "CSMT BUS STATION",
@@ -259,6 +254,16 @@ const allBusStops = [
     "SANTACRUZ BUS DEPOT"
 ];
 
+const findBusNumber = (start, end) => {
+    for (const [busNumber, stops] of Object.entries(busRoutes)) {
+        const startIndex = stops.indexOf(start);
+        const endIndex = stops.indexOf(end);
+        if (startIndex !== -1 && endIndex !== -1 && startIndex < endIndex) {
+            return busNumber;
+        }
+    }
+    return null;
+};
 
 const findBestRoute = (start, end) => {
     let directRoute = null;
@@ -336,8 +341,25 @@ const Dashboard = () => {
         let routeText = '';
         if (directRoute) {
             routeText = `From ${selectedStation} take bus number ${directRoute.busNumber} till ${destination}`;
+            navigation.navigate('BusDetails', {
+                busNumber: directRoute.busNumber,
+                startStop: selectedStation,
+                endStop: destination,
+            });
         } else if (connectingRoute) {
             routeText = `From ${selectedStation} take bus number ${connectingRoute.firstBus.busNumber} till ${connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1]}, then from ${connectingRoute.secondBus.route[0]} take bus number ${connectingRoute.secondBus.busNumber} till ${destination}`;
+            navigation.navigate('BusDetails', {
+                busNumber: connectingRoute.firstBus.busNumber,
+                startStop: selectedStation,
+                endStop: connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1],
+            });
+            setTimeout(() => {
+                navigation.navigate('BusDetails', {
+                    busNumber: connectingRoute.secondBus.busNumber,
+                    startStop: connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1],
+                    endStop: destination,
+                });
+            }, 1000);
         }
 
         Alert.alert(
@@ -345,6 +367,28 @@ const Dashboard = () => {
             `Best Route:\n\n${routeText}`,
             [{ text: 'OK', style: 'default' }]
         );
+    };
+
+    const handleDirectStop = (stop) => {
+        const busNumber = findBusNumber(selectedStation, stop);
+        if (busNumber) {
+            Alert.alert(
+                'Bus Number',
+                `Take bus number ${busNumber} to ${stop}.`,
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => navigation.navigate('BusDetails', {
+                            busNumber: busNumber,
+                            startStop: selectedStation,
+                            endStop: stop,
+                        }),
+                    },
+                ]
+            );
+        } else {
+            Alert.alert('No Direct Bus', `No direct bus from ${selectedStation} to ${stop}.`);
+        }
     };
 
     const handleOpenModal = (station, excluded) => {
@@ -384,7 +428,7 @@ const Dashboard = () => {
                                 {item.details.map((detail, index) => (
                                     <TouchableOpacity
                                         key={index}
-                                        onPress={() => detail === "Destination" ? handleOpenModal(item.name, item.details) : null}
+                                        onPress={() => detail === "Destination" ? handleOpenModal(item.name, item.details) : handleDirectStop(detail)}
                                     >
                                         <Text style={styles.detailText}>To ➔ {detail}</Text>
                                     </TouchableOpacity>
