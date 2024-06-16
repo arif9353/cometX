@@ -63,7 +63,10 @@ const BusDetails = ({ route }) => {
             const time = await getEstimatedTime(
                 { latitude: parseFloat(details.latitude), longitude: parseFloat(details.longitude) },
                 { latitude: parseFloat(userStopLocation.latitude), longitude: parseFloat(userStopLocation.longitude) },
-                waypoints
+                waypoints,
+                userStopLocation,
+                startStop,
+                details.nextStopsList
             );
             setEstimatedTime(time);
         } catch (err) {
@@ -105,9 +108,12 @@ const BusDetails = ({ route }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Bus Number: {busNumber}</Text>
+            <Text style={styles.detail}>Bus start stop: {busDetails.stopsList[0]}</Text>
+            <Text style={styles.detail}>Bus end stop: {busDetails.stopsList[busDetails.stopsList.length - 1]}</Text>
             <Text style={styles.detail}>From: {startStop}</Text>
             <Text style={styles.detail}>To: {endStop}</Text>
-            <Text style={styles.detail}>Estimated Time: {estimatedTime ? estimatedTime.duration : 'N/A'}</Text>
+            <Text style={styles.detail}>Estimated Time For Complete Duration: {estimatedTime ? estimatedTime.fullDuration : 'N/A'}</Text>
+            <Text style={styles.detail}>Estimated time for bus to reach {startStop}: {estimatedTime ? estimatedTime.userDuration : 'N/A'}</Text>
             <Text style={styles.detail}>Ticket Price: {busDetails.ticketPrice || 'N/A'}</Text>
             <MapView
                 style={styles.map}
