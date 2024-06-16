@@ -1,13 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
 import { getBusDetails } from './busService';
+import { getEstimatedTime } from './distanceService';
+import { GOOGLE_MAPS_API_KEY } from './googleMapsConfig';
 
 const BusDetails = ({ route }) => {
-    const { busNumber, startStop, endStop } = route.params;
+    const { busNumber, startStop, endStop, userStopLocation } = route.params;
     const [busDetails, setBusDetails] = useState(null);
+    const [estimatedTime, setEstimatedTime] = useState(null);
     const [error, setError] = useState(null);
-    const mapRef = useRef(null);
+    const [region, setRegion] = useState({
+        latitude: 0,
+        longitude: 0,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+    });
 
     const fetchBusDetails = async () => {
         try {
@@ -16,6 +25,18 @@ const BusDetails = ({ route }) => {
                 throw new Error('No details found for the bus number');
             }
             setBusDetails(details);
+            setRegion({
+                latitude: details.latitude,
+                longitude: details.longitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            });
+
+            const time = await getEstimatedTime(
+                { latitude: details.latitude, longitude: details.longitude },
+                userStopLocation
+            );
+            setEstimatedTime(time);
         } catch (err) {
             setError(err.message);
         }
@@ -30,26 +51,6 @@ const BusDetails = ({ route }) => {
 
         return () => clearInterval(intervalId); // Clean up interval on component unmount
     }, [busNumber]);
-
-    useEffect(() => {
-        if (busDetails && mapRef.current) {
-            mapRef.current.animateToRegion({
-                latitude: busDetails.latitude || 0,
-                longitude: busDetails.longitude || 0,
-                latitudeDelta: 0.01, // Adjust as needed for the zoom level
-                longitudeDelta: 0.01, // Adjust as needed for the zoom level
-            }, 1000); // Duration of the animation in milliseconds
-        }
-    }, [busDetails]);
-
-    const calculateRoute = (start, end) => {
-        // Placeholder function to calculate route between start and end points
-        // Replace with actual route calculation logic if needed
-        return [
-            { latitude: start.latitude, longitude: start.longitude },
-            { latitude: end.latitude, longitude: end.longitude }
-        ];
-    };
 
     if (error) {
         return (
@@ -67,48 +68,27 @@ const BusDetails = ({ route }) => {
         );
     }
 
-    const userStopLocation = { // Replace with actual coordinates of the user's bus stop
-        latitude: 19.09127141800914,
-        longitude: 72.83831246932138
-    };
-
-    const routeCoordinates = calculateRoute(busDetails, userStopLocation);
-
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Bus Number: {busNumber}</Text>
             <Text style={styles.detail}>From: {startStop}</Text>
             <Text style={styles.detail}>To: {endStop}</Text>
-            <Text style={styles.detail}>Estimated Time: {busDetails.estimatedTime || 'N/A'}</Text>
+            <Text style={styles.detail}>Estimated Time: {estimatedTime ? estimatedTime.duration : 'N/A'}</Text>
             <Text style={styles.detail}>Ticket Price: {busDetails.ticketPrice || 'N/A'}</Text>
             <MapView
-                ref={mapRef}
                 style={styles.map}
-                initialRegion={{
-                    latitude: busDetails.latitude || 0,
-                    longitude: busDetails.longitude || 0,
-                    latitudeDelta: 0.01, // Adjust as needed for the zoom level
-                    longitudeDelta: 0.01, // Adjust as needed for the zoom level
-                }}
+                region={region}
+                onRegionChangeComplete={setRegion}
+                showsUserLocation={true}
+                followUserLocation={true}
             >
-                <Marker
-                    coordinate={{
-                        latitude: busDetails.latitude || 0,
-                        longitude: busDetails.longitude || 0,
-                    }}
-                    title={`Bus ${busNumber}`}
-                    description={endStop}
-                />
-                <Marker
-                    coordinate={userStopLocation}
-                    title="Your Stop"
-                    description={endStop}
-                    pinColor="blue"
-                />
-                <Polyline
-                    coordinates={routeCoordinates}
-                    strokeColor="#000"
+                <Marker coordinate={{ latitude: busDetails.latitude, longitude: busDetails.longitude }} />
+                <MapViewDirections
+                    origin={`${busDetails.latitude},${busDetails.longitude}`}
+                    destination={`${userStopLocation.latitude},${userStopLocation.longitude}`}
+                    apikey={GOOGLE_MAPS_API_KEY}
                     strokeWidth={3}
+                    strokeColor="blue"
                 />
             </MapView>
         </View>

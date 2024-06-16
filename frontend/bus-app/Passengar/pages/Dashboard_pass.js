@@ -345,6 +345,7 @@ const Dashboard = () => {
                 busNumber: directRoute.busNumber,
                 startStop: selectedStation,
                 endStop: destination,
+                userStopLocation: { latitude: 18.9729536196383, longitude: 73.0281426422997 }, // Replace with actual coordinates
             });
         } else if (connectingRoute) {
             routeText = `From ${selectedStation} take bus number ${connectingRoute.firstBus.busNumber} till ${connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1]}, then from ${connectingRoute.secondBus.route[0]} take bus number ${connectingRoute.secondBus.busNumber} till ${destination}`;
