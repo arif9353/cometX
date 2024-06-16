@@ -16,11 +16,13 @@ export const getBusDetails = async (busNumber) => {
         }
 
         const busData = data[0];
+        console.log("This is busData\n", busData);
         return {
             latitude: busData.latitude,
             longitude: busData.longitude,
             estimatedTime: busData.estimated_time,
             ticketPrice: busData.ticket_price,
+            nextStopsList: busData.next_stops_list,  // Fetch the next stops list
         };
     } catch (error) {
         console.error('Error fetching bus details:', error.message);

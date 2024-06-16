@@ -13,6 +13,35 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModalStops from './ModalStops';
 
+
+const busStops = {
+    "BACKBAY BUS DEPOT": [18.909632149810452, 72.81736081326508],
+    "CSMT BUS STATION": [18.939040405797314, 72.83546629750742],
+    "BALLARD PIER BUS STOP": [18.937224713205794, 72.84020140674173],
+    "RANI LAXMIBAI BUS STATION SION": [19.04162909216262, 72.8629790178698],
+    "MARINE LINES BUS STATION": [18.94135227119705, 72.82362936360565],
+    "KHODADAD CIRCLE DADAR EAST": [19.01695428068996, 72.84746099954292],
+    "PRABODHANKAR THACKRAY UDAYAN SEWRI": [18.998068277850976, 72.8520096267587],
+    "VIRWANI ESTATE GOREGAON EAST BUS STOP": [19.170747929146984, 72.85888044025228],
+    "BORIVALI WEST BUS STATION": [19.23068223117299, 72.85663008118404],
+    "WADALA BUS DEPOT": [19.01460290000002, 72.85248891696155],
+    "OSHIWARA BUS DEPOT": [19.152928661869556, 72.83707523455593],
+    "AGARKAR CHOWK BUS STOP ANDHERI EAST": [19.118887794434833, 72.84820817779712],
+    "BANDRA WEST BUS DEPOT": [19.053368849733268, 72.83852774182463],
+    "GHATKOPAR BUS DEPOT": [19.08607790663372, 72.91925245173387],
+    "SAKI NAKA BUS STOP": [19.10529084719511, 72.88557616349726],
+    "MAHIM BUS DEPOT": [19.043073792972763, 72.84036613592232],
+    "MULUND WEST BUS DEPOT": [19.17552802117634, 72.94675639034848],
+    "VIKHROLI BUS DEPOT": [19.10191789357874, 72.91952638422788],
+    "VILE PARLE BUS STAND": [19.100463787719562, 72.84466430474967],
+    "PRIYADARSHANI PARK BUS STOP": [19.052260887410764, 72.87947420011628],
+    "CHEMBUR BUS DEPOT": [19.044577657695648, 72.89329293369589],
+    "KANJURMARG WEST BUS STATION": [19.130652858629272, 72.92864793094442],
+    "KURLA NEHRU NAGAR BUS DEPOT": [19.058132358229276, 72.88336005550829],
+    "SANTACRUZ BUS DEPOT": [19.09127141800914, 72.83831246932138],
+};
+
+
 const stations = [
     {
         name: "BACKBAY BUS DEPOT",
@@ -227,33 +256,6 @@ const busRoutes = {
     ]
 };
 
-const allBusStops = [
-    "BACKBAY BUS DEPOT",
-    "CSMT BUS STATION",
-    "BALLARD PIER BUS STOP",
-    "RANI LAXMIBAI BUS STATION SION",
-    "MARINE LINES BUS STATION",
-    "KHODADAD CIRCLE DADAR EAST",
-    "PRABODHANKAR THACKRAY UDAYAN SEWRI",
-    "VIRWANI ESTATE GOREGAON EAST BUS STOP",
-    "BORIVALI WEST BUS STATION",
-    "WADALA BUS DEPOT",
-    "OSHIWARA BUS DEPOT",
-    "AGARKAR CHOWK BUS STOP ANDHERI EAST",
-    "BANDRA WEST BUS DEPOT",
-    "GHATKOPAR BUS DEPOT",
-    "SAKI NAKA BUS STOP",
-    "MAHIM BUS DEPOT",
-    "MULUND WEST BUS DEPOT",
-    "VIKHROLI BUS DEPOT",
-    "VILE PARLE BUS STAND",
-    "PRIYADARSHANI PARK BUS STOP",
-    "CHEMBUR BUS DEPOT",
-    "KANJURMARG WEST BUS STATION",
-    "KURLA NEHRU NAGAR BUS DEPOT",
-    "SANTACRUZ BUS DEPOT"
-];
-
 const findBusNumber = (start, end) => {
     for (const [busNumber, stops] of Object.entries(busRoutes)) {
         const startIndex = stops.indexOf(start);
@@ -327,6 +329,7 @@ const Dashboard = () => {
 
     const toggleExpand = (station) => {
         setExpandedStation(expandedStation === station.name ? null : station.name);
+        setSelectedStation(station.name);
     };
 
     const handleSelectDestination = (destination) => {
@@ -338,6 +341,7 @@ const Dashboard = () => {
             return;
         }
 
+        const userStopLocation = busStops[selectedStation];
         let routeText = '';
         if (directRoute) {
             routeText = `From ${selectedStation} take bus number ${directRoute.busNumber} till ${destination}`;
@@ -345,14 +349,16 @@ const Dashboard = () => {
                 busNumber: directRoute.busNumber,
                 startStop: selectedStation,
                 endStop: destination,
-                userStopLocation: { latitude: 18.9729536196383, longitude: 73.0281426422997 }, // Replace with actual coordinates
+                userStopLocation: { latitude: userStopLocation[0], longitude: userStopLocation[1] }, // Pass coordinates
             });
         } else if (connectingRoute) {
+            console.log(connectingRoute.firstBus.busNumber)
             routeText = `From ${selectedStation} take bus number ${connectingRoute.firstBus.busNumber} till ${connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1]}, then from ${connectingRoute.secondBus.route[0]} take bus number ${connectingRoute.secondBus.busNumber} till ${destination}`;
             navigation.navigate('BusDetails', {
                 busNumber: connectingRoute.firstBus.busNumber,
                 startStop: selectedStation,
                 endStop: connectingRoute.firstBus.route[connectingRoute.firstBus.route.length - 1],
+                userStopLocation: { latitude: userStopLocation[0], longitude: userStopLocation[1] }
             });
             setTimeout(() => {
                 navigation.navigate('BusDetails', {
@@ -373,6 +379,7 @@ const Dashboard = () => {
     const handleDirectStop = (stop) => {
         const busNumber = findBusNumber(selectedStation, stop);
         if (busNumber) {
+            const userStopLocation = busStops[selectedStation];
             Alert.alert(
                 'Bus Number',
                 `Take bus number ${busNumber} to ${stop}.`,
@@ -383,6 +390,7 @@ const Dashboard = () => {
                             busNumber: busNumber,
                             startStop: selectedStation,
                             endStop: stop,
+                            userStopLocation: { latitude: userStopLocation[0], longitude: userStopLocation[1] }, // Pass coordinates
                         }),
                     },
                 ]

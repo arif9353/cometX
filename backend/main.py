@@ -1,9 +1,11 @@
 from fastapi import FastAPI,File,UploadFile,Form, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-import json
-import uvicorn
+from twilio.rest import Client
+import requests
+account_sid = "AC41c80dbb738391e481215fb5231942f6"
+auth_token = "893ac53a381559fbe74107ac0346c077"
+client = Client(account_sid, auth_token)
 from crowd_prediciton4 import get_density
 
 app = FastAPI()
@@ -198,3 +200,135 @@ async def routes(bus_number: str = Form(...)):
     except Exception as e:
         print(f"Error occurred in routes function {str(e)}")
         return JSONResponse(content={"response":f"Error occurred in routes function {str(e)}","success":False},status_code=500)
+
+
+languages = {
+    "Hindi": "hi", #hindi
+    "Gom": "gom", #Gom
+    "Kannade": "kn", #Kannada
+    "Dogri": "doi", #Dogri    
+    "Bodo": "brx", #Bodo 
+    "Urdu": "ur",  #Urdu
+    "Tamil": "ta",  #Tamil
+    "Kashmiri": "ks",  #Kashmiri
+    "Assamese": "as",  #Assamese
+    "Bengali": "bn", #Bengali
+    "Marathi": "mr", #Marathi
+    "Sindhi": "sd", #Sindhi
+    "Maihtili": "mai",#Maithili
+    "Punjabi": "pa", #Punjabi
+    "Malayalam": "ml", #Malayalam
+    "Manipuri": "mni",#Manipuri
+    "Telugu": "te", #Telugu
+    "Sanskrit": "sa", #Sanskrit
+    "Nepali": "ne", #Nepali
+    "Santali": "sat",#Santali
+    "Gujarati": "gu", #Gujarati
+    "Oriya": "or", #Oriya
+    "English": "en",#English
+}
+
+async def translation(source_lang, target_lang, content):
+    source_language = languages[source_lang]
+    target_language = languages[target_lang]
+    payload = {
+        "pipelineTasks": [
+            {
+                "taskType": "translation",
+                "config": {
+                    "language": {
+                        "sourceLanguage": source_language,
+                        "targetLanguage": target_language
+                    }
+                }
+            }
+        ],
+        "pipelineRequestConfig": {
+            "pipelineId" : "64392f96daac500b55c543cd"
+        }
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "userID": "e832f2d25d21443e8bb90515f1079041",
+        "ulcaApiKey": "39e27ce432-f79c-46f8-9c8c-c0856007cb4b"
+    }
+    response = requests.post('https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline', json=payload, headers=headers)
+    if response.status_code == 200:
+        response_data = response.json()
+        service_id = response_data["pipelineResponseConfig"][0]["config"][0]["serviceId"]
+
+        compute_payload = {
+            "pipelineTasks": [
+                {
+                    "taskType": "translation",
+                    "config": {
+                        "language": {
+                            "sourceLanguage": source_language,
+                            "targetLanguage": target_language
+                        },
+                        "serviceId": service_id
+                    }
+                }
+            ],
+            "inputData": {
+                "input": [
+                    {
+                        "source": content
+                    }
+                ],
+                "audio": [
+                    {
+                        "audioContent": None
+                    }
+                ]
+            }
+        }
+        callback_url = response_data["pipelineInferenceAPIEndPoint"]["callbackUrl"]
+        headers2 = {
+            "Content-Type": "application/json",
+            response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["name"]:
+                response_data["pipelineInferenceAPIEndPoint"]["inferenceApiKey"]["value"]
+        }
+        compute_response = requests.post(callback_url, json=compute_payload, headers=headers2)
+        if compute_response.status_code == 200:
+            compute_response_data = compute_response.json()
+            translated_content = compute_response_data["pipelineResponse"][0]["output"][0]["target"]
+            return {
+                "status_code": 200,
+                "message": "Translation successful",
+                "translated_content": translated_content
+            }
+        else:
+            return {
+                "status_code": compute_response.status_code,
+                "message": "Error in translation",
+                "translated_content": None
+            }
+    else:
+        return {
+            "status_code": response.status_code,
+            "message": "Error in translation request",
+            "translated_content": None
+        }
+
+async def twilio_message(reply):
+    message = client.messages.create(
+        from_='+15515534910',
+        body=reply,
+        to='+917021828450')
+    print(message.sid)
+    return message 
+
+@app.post('/alert')
+async def alerts(alert_message: str = Form(...),language:str=Form(...)):
+    try:
+        if language=="English":
+          messi = await twilio_message(alert_message)
+          return JSONResponse(content={"success":True, "response":"Message sent"}, status_code=200)
+        else:
+            translated_message = await translation('English',language,alert_message)
+            messi = await twilio_message(translated_message["translated_content"])
+            return JSONResponse(content={"success":True, "response":"Message sent"}, status_code=200)
+    except Exception as e:
+        print(f"Error occurred in routes function {str(e)}")
+        return JSONResponse(content={"success":False,"response":f"Error occurred in routes function {str(e)}"}, status_code=500)
