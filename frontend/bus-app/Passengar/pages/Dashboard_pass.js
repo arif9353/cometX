@@ -475,7 +475,6 @@ const Dashboard = () => {
         const userStopLocation = busStops[selectedStation];
         let routeText = "";
         if (directRoute) {
-            routeText = `From ${selectedStation} take bus number ${directRoute.busNumber} till ${destination}`;
             navigation.navigate("BusDetails", {
                 busNumber: directRoute.busNumber,
                 startStop: selectedStation,
@@ -486,61 +485,47 @@ const Dashboard = () => {
                 }, // Pass coordinates
             });
         } else if (connectingRoute) {
-            console.log(connectingRoute.firstBus.busNumber);
+            console.log(connectingRoute.firstBus);
             routeText = `From ${selectedStation} take bus number ${connectingRoute.firstBus.busNumber
                 } till ${connectingRoute.firstBus.route[
                 connectingRoute.firstBus.route.length - 1
                 ]
                 }, then from ${connectingRoute.secondBus.route[0]} take bus number ${connectingRoute.secondBus.busNumber
                 } till ${destination}`;
-            navigation.navigate("BusDetails", {
-                busNumber: connectingRoute.firstBus.busNumber,
-                startStop: selectedStation,
-                endStop:
-                    connectingRoute.firstBus.route[
-                    connectingRoute.firstBus.route.length - 1
-                    ],
-                userStopLocation: {
-                    latitude: userStopLocation[0],
-                    longitude: userStopLocation[1],
+            Alert.alert("Best Route", `${routeText}`, [
+                {
+                    text: "OK",
+                    onPress: () =>
+                        navigation.navigate("BusDetails", {
+                            busNumber: connectingRoute.firstBus.busNumber,
+                            startStop: selectedStation,
+                            endStop:
+                                connectingRoute.firstBus.route[
+                                connectingRoute.firstBus.route.length - 1
+                                ],
+                            userStopLocation: {
+                                latitude: userStopLocation[0],
+                                longitude: userStopLocation[1],
+                            },
+                        }),
                 },
-            });
-            setTimeout(() => {
-                navigation.navigate("BusDetails", {
-                    busNumber: connectingRoute.secondBus.busNumber,
-                    startStop:
-                        connectingRoute.firstBus.route[
-                        connectingRoute.firstBus.route.length - 1
-                        ],
-                    endStop: destination,
-                });
-            }, 1000);
+            ]);
         }
-
-        Alert.alert("Select Route", `Best Route:\n\n${routeText}`, [
-            { text: "OK", style: "default" },
-        ]);
     };
 
     const handleDirectStop = (stop) => {
         const busNumber = findBusNumber(selectedStation, stop);
         if (busNumber) {
             const userStopLocation = busStops[selectedStation];
-            Alert.alert("Bus Number", `Take bus number ${busNumber} to ${stop}.`, [
-                {
-                    text: "OK",
-                    onPress: () =>
-                        navigation.navigate("BusDetails", {
-                            busNumber: busNumber,
-                            startStop: selectedStation,
-                            endStop: stop,
-                            userStopLocation: {
-                                latitude: userStopLocation[0],
-                                longitude: userStopLocation[1],
-                            }, // Pass coordinates
-                        }),
-                },
-            ]);
+            navigation.navigate("BusDetails", {
+                busNumber: busNumber,
+                startStop: selectedStation,
+                endStop: stop,
+                userStopLocation: {
+                    latitude: userStopLocation[0],
+                    longitude: userStopLocation[1],
+                }, // Pass coordinates
+            });
         } else {
             Alert.alert(
                 "No Direct Bus",
@@ -548,6 +533,7 @@ const Dashboard = () => {
             );
         }
     };
+
 
     const handleOpenModal = (station, excluded) => {
         setSelectedStation(station);

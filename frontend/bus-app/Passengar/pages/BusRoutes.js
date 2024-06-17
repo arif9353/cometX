@@ -6,15 +6,24 @@ import MapViewDirections from 'react-native-maps-directions';
 import { GOOGLE_MAPS_API_KEY } from '../components/googleMapsConfig';
 import busNumberBasedStops from '../components/busNumberBasedStops';
 import busStopsCoordinates from '../components/busStopsCoordinates';
+import { useNavigation } from "@react-navigation/native";
 
 const BusRoutes = () => {
     const [selectedBus, setSelectedBus] = useState('102');
-
+    const navigation = useNavigation();
     const busRoute = busNumberBasedStops[selectedBus] || [];
     const waypoints = busRoute.map(stop => busStopsCoordinates[stop]).filter(coord => coord);
 
     return (
         <View style={styles.container}>
+            <Text
+                style={styles.back}
+                onPress={() => {
+                    navigation.navigate("Dashboard_pass");
+                }}
+            >
+                Back
+            </Text>
             <View style={styles.pickerContainer}>
                 <Picker
                     selectedValue={selectedBus}
@@ -69,12 +78,19 @@ const BusRoutes = () => {
 };
 
 const styles = StyleSheet.create({
+    back: {
+        fontWeight: "500",
+        fontSize: 15,
+        marginLeft: 20,
+        marginBottom: 5,
+        marginTop: 40,
+    },
     container: {
         flex: 1,
         backgroundColor: '#fff',
     },
     pickerContainer: {
-        padding: 20,
+        padding: 10,
         backgroundColor: '#f0f0f0',
     },
     picker: {
@@ -86,6 +102,7 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
+        marginTop: 10
     },
     customMarker: {
         backgroundColor: 'yellow',
