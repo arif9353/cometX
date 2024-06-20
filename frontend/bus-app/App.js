@@ -9,6 +9,7 @@ import LocationProvider from "./src/LocationProvider"; // Adjust the path as nec
 import Dashboard from "./Passengar/pages/Dashboard_pass";
 import BusDetails from "./Passengar/components/BusDetails";
 import BusRoutes from './Passengar/pages/BusRoutes';
+import ChatScreen from "./Passengar/pages/Chatbot";
 
 const Stack = createNativeStackNavigator();
 
@@ -16,7 +17,12 @@ const App = () => {
   return (
     <LocationProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName={"Info"}>
+        <Stack.Navigator initialRouteName={"Chatbot"}>
+          <Stack.Screen
+            name="Chatbot"
+            component={ChatScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="BusRoutes"
             component={BusRoutes}

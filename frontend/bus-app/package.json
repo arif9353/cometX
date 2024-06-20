@@ -17,14 +17,17 @@
     "@supabase/supabase-js": "^2.43.4",
     "axios": "^1.7.2",
     "expo": "~51.0.14",
+    "expo-av": "^14.0.5",
     "expo-location": "~17.0.1",
     "expo-status-bar": "~1.12.1",
     "polyline": "^0.2.0",
     "react": "18.2.0",
     "react-native": "0.74.2",
     "react-native-dropdown-picker": "^5.4.6",
+    "react-native-element-dropdown": "^2.12.0",
     "react-native-maps": "^1.15.6",
-    "react-native-maps-directions": "^1.9.0"
+    "react-native-maps-directions": "^1.9.0",
+    "react-native-paper": "^5.12.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
