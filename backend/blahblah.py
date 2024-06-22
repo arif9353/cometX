@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os, base64, requests, subprocess
 import google.generativeai as genai
 from supabase import create_client
+import re
 
 
 app = FastAPI()
@@ -56,7 +57,7 @@ supabase = create_client(url, key)
 
 async def get_user_data():
     try:
-        data = supabase.table("driver").select("*").eq("language","English").execute()
+        data = supabase.table("driver").select("driver_name,bus_number,next_stops_list,trip_start_time,trip_start_status,stopsList,bus_type").eq("language","English").execute()
         print("data from get_user_data", data.data)
         return data.data
     except Exception as e:
@@ -345,16 +346,27 @@ async def chatbot(dropdown: str=Form(...), source_lang: str=Form(...), text: str
         return JSONResponse(content={"response":str(e),"success":False},status_code=500)
     
 
+def clean_text(text):
+    # Remove unwanted characters like asterisks and newline
+    cleaned_text = re.sub(r'[*\n]', '', text)
+    # Replace multiple spaces with a single space
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)
+    # Strip leading and trailing whitespace
+    cleaned_text = cleaned_text.strip()
+    return cleaned_text
+
 
 @app.post('/chattext')
-async def chattext(request:Request):
+async def chattext(dropdown: str=Form(...),language: str=Form(...),text:str=Form(...)):
     try:
         # text = await request.json()
+        '''
         dropdown=102
         translate_text = None
         reponse = await request.json()
         text = reponse["message"]
         language = reponse["language"]
+        '''
         if language == "English":
             translate_text = text
         else:
@@ -363,12 +375,34 @@ async def chattext(request:Request):
         supabase_result = await get_user_data()
         print("\n\n")
         print(translate_text)
-        query = f"I am providing you below with the details of my bus, bus number and user query. Based on the details, provide a relevant response to the user's query.\n\nBus details: {supabase_result}\n\nBus Number:{dropdown}\n\nUser Query:{translate_text}"
-        response = model.generate_content(query)
+        query = f"""You are an intelligent chatbot designed to assist users with queries related to a bus service. The bus service database contains the following columns:
+1. *bus_number*: The unique identifier for each bus route.
+2. *driver_name*: The name of the driver assigned to the bus.
+3. *bus_type*: The type i.e size of the bus.
+4. *next_stops_list*: A list of bus stops the bus is yet to cover.The list below is for your example if user asks for bus location.[
+    "BACKBAY BUS DEPOT",
+    "CSMT BUS STATION",
+    "MARINE LINES BUS STATION",
+    "BALLARD PIER BUS STOP",
+    "PRIYADARSHANI PARK BUS STOP",
+    "WADALA BUS DEPOT",
+    "MAHIM BUS DEPOT",
+    "KHODADAD CIRCLE DADAR EAST",
+    "RANI LAXMIBAI BUS STATION SION",
+    "BANDRA WEST BUS DEPOT",
+    "PRABODHANKAR THACKRAY UDAYAN SEWRI",
+    "AGARKAR CHOWK BUS STOP ANDHERI EAST"
+  ]  in this list if the bus is still at backbay tell that it is near backbay but if it has crossed backbay and is moving towards csmt bus station, tell that it is between the two respective bus stops. 
+5. *stopsList*: A comprehensive list of all the stops from source to destination for the bus route. The first entry in the stopsList gives the source bus stop and the last entry in the list gives Destination of the bus.
+6. *trip_start_time*: The scheduled start time of the bus trip.
+7. *trip_start_status*: A status indicator showing whether the trip has started or not. Please give me plain text in readable format. Don't use unwanted signs and symbols.include commas wherever while listing bus stop names.
+.\n\nBus details: {supabase_result}\n\nBus Number:{dropdown}\n\nUser Query:{translate_text}"""
+        response_gemini = model.generate_content(query)
+        response = clean_text(response_gemini.text)
         if language == "English":
-            return JSONResponse(content={"message":response.text, "success":True}, status_code=200)
+            return JSONResponse(content={"message":response, "success":True}, status_code=200)
         else:
-            translated_resp = await translation("English",language,response.text)
+            translated_resp = await translation("English",language,response)
             return JSONResponse(content={"message":translated_resp["translated_content"], "success":True}, status_code=200)
     except Exception as e:
         print(str(e))
@@ -391,4 +425,4 @@ async def chataudio(language: str = Form(...), file: UploadFile = Form(...)):
         return JSONResponse(content={"message": text, "success": True}, status_code=200)
     except Exception as e:
         print(e)
-        return JSONResponse(content={"message": "Try failure", "success": False}, status_code=500)   
+        return JSONResponse(content={"message": "Try failure", "success": False}, status_code=500)
